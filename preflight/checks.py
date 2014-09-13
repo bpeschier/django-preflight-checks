@@ -3,7 +3,7 @@ import pwd
 from django.core import mail
 import os
 from django import apps
-from django.core.checks import register, Error, Warning
+from django.core.checks import register, Error, Warning, Tags
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -13,41 +13,31 @@ CURRENT_USER = pwd.getpwuid(os.getuid()).pw_name
 TARGET_USER = getattr(settings, 'DEPLOY_TARGET_USER', None)
 
 
-def should_run(app_configs):
-    return not settings.DEBUG or (app_configs and bool(
-        list(filter(lambda app: app.name == "deply_checks", app_configs))))
-
 
 #
 # Internal checks
 #
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_user(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
     if TARGET_USER is None:
         errors.append(Warning(
             'No DEPLOY_TARGET_USER set, define it to check write permissions on storages',
-            id='deploy_checks.W001'
+            id='preflight.W001'
         ))
 
     if TARGET_USER and TARGET_USER != CURRENT_USER:
         errors.append(Warning(
             'You are not running as DEPLOY_TARGET_USER, writeable-checks can not be trusted',
-            id='deploy_checks.W002'
+            id='preflight.W002'
         ))
 
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_debug(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     if settings.DEBUG:
@@ -82,11 +72,8 @@ def check_debug(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_databases(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # Check the default database
@@ -108,11 +95,8 @@ def check_databases(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_caches(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     cache = settings.CACHES.get('default')
@@ -126,11 +110,8 @@ def check_caches(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_file_storage(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # Check if storage is writeable
@@ -149,11 +130,8 @@ def check_file_storage(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_email(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # Check for debug-ish email backends
@@ -195,11 +173,8 @@ def check_email(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_localization(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # TODO: check if translations are available for all languages and warn about missing labels
@@ -207,11 +182,8 @@ def check_localization(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
-def check_loggin(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
+@register('preflight', deploy=True)
+def check_logging(app_configs, **kwargs):
     errors = []
 
     # Get all configs if we don't get a specific set
@@ -238,11 +210,8 @@ def check_loggin(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_security(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # TODO: check SECRET_KEY for stupid things
@@ -251,11 +220,8 @@ def check_security(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_sessions(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # TODO: check backend and
@@ -264,11 +230,8 @@ def check_sessions(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_static(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # Get all configs if we don't get a specific set
@@ -288,7 +251,7 @@ def check_static(app_configs, **kwargs):
         except IOError:
             errors.append(Error(
                 'Compressor storage is not writeable',
-                id='deploy_checks.E003'
+                id='preflight.E003'
             ))
         else:
             storage.delete(path)
@@ -299,11 +262,8 @@ def check_static(app_configs, **kwargs):
     return errors
 
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_templates(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # TODO: check cache headers are set
@@ -321,11 +281,8 @@ def check_templates(app_configs, **kwargs):
 # External checks
 #
 
-@register('deploy')
+@register('preflight', deploy=True)
 def check_static_responses(app_configs, **kwargs):
-    if not should_run(app_configs):
-        return []
-
     errors = []
 
     # TODO: check cache headers are set

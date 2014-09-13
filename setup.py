@@ -4,12 +4,12 @@ with open('README.md') as file:
     long_description = file.read()
 
 setup(
-    name='django-deploy-checks',
+    name='django-preflight',
     version='0.1.0b1',
-    url='http://github.com/bpeschier/django-deploy-checks',
+    url='http://github.com/bpeschier/django-preflight',
     author="Bas Peschier",
     author_email="bpeschier@bpeschier.nl",
-    packages=['deploy_checks', ],
+    packages=['preflight', ],
     license='MIT',
     long_description=long_description,
     classifiers=[
@@ -20,5 +20,5 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    # install_requires=['Django>=1.7'],
+    install_requires=['Django>=1.8'],
 )
