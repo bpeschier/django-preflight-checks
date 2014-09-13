@@ -261,27 +261,7 @@ def check_logging(app_configs, **kwargs):
         except ImportError:
             print('HUH?')
 
-    # TODO: check if there is a manager if s**t hits the fan
-
-    return errors
-
-
-@register('preflight', deploy=True)
-def check_security(app_configs, **kwargs):
-    errors = []
-
-    # TODO: check SECRET_KEY for stupid things
-    # TODO: check ALLOWED_HOSTS for stupid things
-
-    return errors
-
-
-@register('preflight', deploy=True)
-def check_sessions(app_configs, **kwargs):
-    errors = []
-
-    # TODO: check backend and
-    # TODO: SESSION_COOKIE_HTTPONLY should be True
+    # TODO: check logging for email admins if no raven?
 
     return errors
 
