@@ -8,7 +8,7 @@ setup(
     version='0.1.0b1',
     url='http://github.com/bpeschier/django-preflight',
     author="Bas Peschier",
-    author_email="bpeschier@bpeschier.nl",
+    author_email="bpeschier@fizzgig.nl",
     packages=['preflight', ],
     license='MIT',
     long_description=long_description,

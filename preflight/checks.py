@@ -1,23 +1,24 @@
 import pwd
+import os
 
 from django.core import mail
-import os
 from django import apps
-from django.core.checks import register, Error, Warning, Tags
+from django.core.checks import register, Error, Warning
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+import logging
 
 
 CURRENT_USER = pwd.getpwuid(os.getuid()).pw_name
 TARGET_USER = getattr(settings, 'DEPLOY_TARGET_USER', None)
 
 
-
 #
 # Internal checks
 #
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_user(app_configs, **kwargs):
     errors = []
@@ -36,6 +37,7 @@ def check_user(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_debug(app_configs, **kwargs):
     errors = []
@@ -72,6 +74,7 @@ def check_debug(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_databases(app_configs, **kwargs):
     errors = []
@@ -95,6 +98,7 @@ def check_databases(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_caches(app_configs, **kwargs):
     errors = []
@@ -110,6 +114,7 @@ def check_caches(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_file_storage(app_configs, **kwargs):
     errors = []
@@ -130,6 +135,7 @@ def check_file_storage(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_email(app_configs, **kwargs):
     errors = []
@@ -153,6 +159,7 @@ def check_email(app_configs, **kwargs):
         # Check if we can send email. We just check if the mechanism works, we
         # can not detect if the backend fails after we send it (delayed
         # refusals).
+        # noinspection PyBroadException
         try:
             connection = mail.get_connection(fail_silently=False)
             mail.EmailMessage(
@@ -173,6 +180,7 @@ def check_email(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_localization(app_configs, **kwargs):
     errors = []
@@ -182,6 +190,7 @@ def check_localization(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_logging(app_configs, **kwargs):
     errors = []
@@ -204,8 +213,55 @@ def check_logging(app_configs, **kwargs):
                 id='deploy_logging.E001'
             ))
 
+        try:
+            # noinspection PyPackageRequirements,PyUnresolvedReferences
+            from raven.contrib.django.models import client
+
+            # So we are duplicating code from manage.py raven test here...
+
+            if not all([client.servers, client.project, client.public_key, client.secret_key]):
+                errors.append(Error(
+                    'Raven config is not complete',
+                    id='deploy_logging.E002'
+                ))
+
+            if not client.is_enabled():
+                errors.append(Error(
+                    'Raven is disabled',
+                    id='deploy_logging.E003'
+                ))
+
+            # Test sending
+            data = {
+                'culprit': 'preflight.checks.check_logging',
+                'logger': 'raven.test',
+                'request': {
+                    'method': 'GET',
+                    'url': 'http://example.com',
+                }
+            }
+            ident = client.get_ident(client.captureMessage(
+                message='This is a test message generated using ``raven test``',
+                data=data,
+                level=logging.INFO,
+                stack=True,
+                tags={},
+                extra={
+                    'user': CURRENT_USER,
+                    'loadavg': os.getloadavg(),
+                },
+            ))
+
+            if client.state.did_fail():
+                errors.append(Error(
+                    'Raven could not send test message',
+                    id='deploy_logging.E004'
+                ))
+
+        except ImportError:
+            print('HUH?')
+
     # TODO: check if there is a manager if s**t hits the fan
-    # TODO: check if raven is configured (if installed, warn if not)
 
     return errors
 
