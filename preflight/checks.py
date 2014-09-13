@@ -1,14 +1,13 @@
 import pwd
 import os
+import logging
 
 from django.core import mail
 from django import apps
 from django.core.checks import register, Error, Warning, Info
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-import logging
 
 
 CURRENT_USER = pwd.getpwuid(os.getuid()).pw_name
@@ -178,7 +177,7 @@ def check_email(app_configs, **kwargs):
         if settings.DEFAULT_FROM_EMAIL.endswith('@localhost'):
             errors.append(Error(
                 "DEFAULT_FROM_EMAIL is set to an @localhost address",
-                id='preflight_email.E001'
+                id='preflight_email.E002'
             ))
 
         if settings.SERVER_EMAIL == 'root@localhost':
@@ -295,7 +294,7 @@ def check_static(app_configs, **kwargs):
 
         # Check if storage is writeable
         try:
-            # noinspection PyPackageRequirements
+            # noinspection PyPackageRequirements,PyUnresolvedReferences
             from compressor.storage import default_storage as storage
 
             path = storage.save('test', ContentFile('new content'))
@@ -318,6 +317,7 @@ def check_static(app_configs, **kwargs):
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_templates(app_configs, **kwargs):
     errors = []
@@ -337,6 +337,7 @@ def check_templates(app_configs, **kwargs):
 # External checks
 #
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_static_responses(app_configs, **kwargs):
     errors = []
