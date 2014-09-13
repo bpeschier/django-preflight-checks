@@ -3,8 +3,9 @@ import os
 
 from django.core import mail
 from django import apps
-from django.core.checks import register, Error, Warning
+from django.core.checks import register, Error, Warning, Info
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 import logging
@@ -148,7 +149,7 @@ def check_email(app_configs, **kwargs):
     ]:
         errors.append(Error(
             'EMAIL_BACKEND is set to a testing/debug backend',
-            id='deploy_email.E001'
+            id='preflight_email.E001'
         ))
 
     # So we assume if you set the dummy backend, you are not interested in mail,
@@ -171,11 +172,22 @@ def check_email(app_configs, **kwargs):
         except:  # Catch all since we do not care about backend at this point
             errors.append(Warning(
                 'Can not send email, check your email settings',
-                id='deploy_email.W001'
+                id='preflight_email.W001'
+            ))
+
+        if settings.DEFAULT_FROM_EMAIL.endswith('@localhost'):
+            errors.append(Error(
+                "DEFAULT_FROM_EMAIL is set to an @localhost address",
+                id='preflight_email.E001'
+            ))
+
+        if settings.SERVER_EMAIL == 'root@localhost':
+            errors.append(Info(
+                "SERVER_EMAIL is still set to'root@localhost'",
+                id='preflight_email.I001'
             ))
 
     # TODO: check spammy-ness of our e-mails
-    # TODO: check DEFAULT_FROM_EMAIL, SERVER_EMAIL
 
     return errors
 
@@ -203,14 +215,14 @@ def check_logging(app_configs, **kwargs):
     if not raven_installed:
         errors.append(Warning(
             'Raven is not installed',
-            id='deploy_logging.W001'
+            id='preflight_logging.W001'
         ))
     else:
         raven_config = getattr(settings, 'RAVEN_CONFIG', None)
         if raven_config is None or not isinstance(raven_config, dict):
             errors.append(Error(
                 'Raven config is not set',
-                id='deploy_logging.E001'
+                id='preflight_logging.E001'
             ))
 
         try:
@@ -222,13 +234,13 @@ def check_logging(app_configs, **kwargs):
             if not all([client.servers, client.project, client.public_key, client.secret_key]):
                 errors.append(Error(
                     'Raven config is not complete',
-                    id='deploy_logging.E002'
+                    id='preflight_logging.E002'
                 ))
 
             if not client.is_enabled():
                 errors.append(Error(
                     'Raven is disabled',
-                    id='deploy_logging.E003'
+                    id='preflight_logging.E003'
                 ))
 
             # Test sending
@@ -255,17 +267,21 @@ def check_logging(app_configs, **kwargs):
             if client.state.did_fail():
                 errors.append(Error(
                     'Raven could not send test message',
-                    id='deploy_logging.E004'
+                    id='preflight_logging.E004'
                 ))
 
         except ImportError:
-            print('HUH?')
+            errors.append(Error(
+                'Raven is in INSTALLED_APPS, but is not installed',
+                id='preflight_logging.E005'
+            ))
 
-    # TODO: check logging for email admins if no raven?
+    # TODO: check if we actually log something
 
     return errors
 
 
+# noinspection PyUnusedLocal
 @register('preflight', deploy=True)
 def check_static(app_configs, **kwargs):
     errors = []
@@ -279,15 +295,19 @@ def check_static(app_configs, **kwargs):
 
         # Check if storage is writeable
         try:
+            # noinspection PyPackageRequirements
             from compressor.storage import default_storage as storage
 
             path = storage.save('test', ContentFile('new content'))
         except ImportError:
-            print('HUH?')
+            errors.append(Error(
+                'Compressor is in INSTALLED_APPS, but is not installed',
+                id='preflight.E003'
+            ))
         except IOError:
             errors.append(Error(
                 'Compressor storage is not writeable',
-                id='preflight.E003'
+                id='preflight.E004'
             ))
         else:
             storage.delete(path)
