@@ -1,1 +1,1 @@
-default_app_config = "preflight.apps.DeployChecksAppConfig"
+default_app_config = "preflight.apps.PreflightChecksAppConfig"

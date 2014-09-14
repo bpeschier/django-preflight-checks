@@ -4,7 +4,7 @@ with open('README.md') as file:
     long_description = file.read()
 
 setup(
-    name='django-preflight',
+    name='django-preflight-checks',
     version='0.1.0b1',
     url='http://github.com/bpeschier/django-preflight',
     author="Bas Peschier",
@@ -20,5 +20,5 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    install_requires=['Django>=1.8'],
+    install_requires=['Django>=1.8.dev0'],
 )
