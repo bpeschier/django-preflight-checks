@@ -21,4 +21,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=['Django>=1.8.dev0'],
+    test_requires=[
+        'django-debug-toolbar>=1.0',
+    ]
 )

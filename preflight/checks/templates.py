@@ -2,7 +2,7 @@ from django.core.checks import register, Error
 from django.conf import settings
 
 E001 = Error(
-    'TEMPLATE_DEBUG is still True',
+    'TEMPLATE_DEBUG is still True.',
     id='preflight_templates.E001'
 )
 
