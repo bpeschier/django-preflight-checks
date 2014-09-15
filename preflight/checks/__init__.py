@@ -4,7 +4,7 @@ from .debug import *
 from .email import *
 from .external import *
 from .localization import *
-from .logging import *
+from .reporting import *
 from .preflight import *
 from .storages import *
 from .templates import *

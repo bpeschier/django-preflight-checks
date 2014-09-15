@@ -3,7 +3,7 @@ from django import apps
 from django.test import SimpleTestCase
 from django.test.utils import override_settings, modify_settings
 from django.conf import settings, global_settings
-from checks import caches, databases, debug, email, external, localization, logging, preflight, storages, templates
+from checks import caches, databases, debug, email, external, localization, reporting, preflight, storages, templates
 
 settings.configure(default_settings=global_settings)
 django.setup()
@@ -68,6 +68,7 @@ class PreflightTests(SimpleTestCase):
     #
     # E-mail
     #
+
     def test_email(self):
         # By default, we can not send mail, we have a "bad" from email and a dodgy server email
         self.assertListEqual([email.W001, email.E002, email.I001], email.check_email(self.apps))
@@ -87,3 +88,33 @@ class PreflightTests(SimpleTestCase):
             with override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
                 # Now we can send, but it will fill up memory
                 self.assertListEqual([email.E001], email.check_email(self.apps))
+
+    #
+    # Reporting
+    #
+
+    def test_reporting_no_raven(self):
+        # First, by default, we do not have Raven
+        self.assertListEqual([reporting.W001], reporting.check_reporting(self.apps))
+
+
+    @modify_settings(INSTALLED_APPS={'append': 'raven.contrib.django.raven_compat'})
+    def test_reporting_raven(self):
+        django.setup()
+
+        # We do not have a config, so it is not enabled
+        self.assertListEqual([reporting.E001, reporting.E002, reporting.E003], reporting.check_reporting(self.apps))
+
+    @modify_settings(INSTALLED_APPS={'append': 'raven.contrib.django.raven_compat'})
+    @override_settings(RAVEN_CONFIG={'dsn': 'sync+http://public:secret@example.com/1'})
+    def test_reporting_raven_config(self):
+        # noinspection PyPackageRequirements
+        from raven.contrib.django import models  # reset raven client?
+        models._client = (None, None)
+        django.setup()
+
+        # Now, we have a config, but it will fail
+        self.assertListEqual([reporting.E004], reporting.check_reporting(self.apps))
+
+
+
