@@ -4,7 +4,7 @@ Preflight
 
 Preflight is a set of deploy checks for Django 1.8 and higher which inspect 
 your settings and setup for common configuration errors on production 
-environments. Often these are  flags which are disabled during development 
+environments. Often these are flags which are disabled during development 
 (``DEBUG = True``) and can easily be overlooked before going live.
 
 Built-in checks cover inspections for non-production settings in caches, 
@@ -30,7 +30,7 @@ Add ``preflight`` to your ``INSTALLED_APPS`` setting::
 Running checks 
 ==============
 
-Checks are are of the Django deploy checks, you can run them with::
+Checks are part of the Django deploy checks, you can run them with::
 
     python manage.py check --deploy
 
