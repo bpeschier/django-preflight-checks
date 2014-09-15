@@ -2,10 +2,10 @@ import django
 from django import apps
 from django.test import SimpleTestCase
 from django.test.utils import override_settings, modify_settings
-from django.conf import settings
+from django.conf import settings, global_settings
 from checks import caches, databases, debug, email, external, localization, logging, preflight, storages, templates
 
-settings.configure(DEBUG=False)
+settings.configure(default_settings=global_settings)
 django.setup()
 
 
@@ -64,3 +64,26 @@ class PreflightTests(SimpleTestCase):
             [debug.W001, debug.W002],
             debug.check_debug(self.apps)
         )
+
+    #
+    # E-mail
+    #
+    def test_email(self):
+        # By default, we can not send mail, we have a "bad" from email and a dodgy server email
+        self.assertListEqual([email.W001, email.E002, email.I001], email.check_email(self.apps))
+
+        with override_settings(SERVER_EMAIL='test@test', DEFAULT_FROM_EMAIL='test@test'):
+            # Now we only get our warning
+            self.assertListEqual([email.W001], email.check_email(self.apps))
+
+            with override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'):
+                # Now we can send, but at the cost of it being dumped in the console
+                self.assertListEqual([email.E001], email.check_email(self.apps))
+
+            with override_settings(EMAIL_BACKEND='django.core.mail.backends.filebased.EmailBackend'):
+                # Now we cannot send, since we did not specify a path
+                self.assertListEqual([email.E001, email.W001], email.check_email(self.apps))
+
+            with override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend'):
+                # Now we can send, but it will fill up memory
+                self.assertListEqual([email.E001], email.check_email(self.apps))
