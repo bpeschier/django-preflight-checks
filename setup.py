@@ -5,15 +5,15 @@ with open('README.rst') as file:
 
 setup(
     name='django-preflight-checks',
-    version='0.1.0b1',
-    url='http://github.com/bpeschier/django-preflight',
+    version='0.1.dev1',
+    url='http://github.com/bpeschier/django-preflight-checks',
     author="Bas Peschier",
     author_email="bpeschier@fizzgig.nl",
     packages=['preflight', ],
     license='MIT',
     long_description=long_description,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.3',
@@ -23,5 +23,6 @@ setup(
     install_requires=['Django>=1.8.dev0'],
     test_requires=[
         'django-debug-toolbar>=1.0',
+        'raven>=5.0',
     ]
 )
