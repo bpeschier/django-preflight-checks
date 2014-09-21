@@ -17,7 +17,7 @@ silence the ones you do not need.
 Installation
 ============
 
-Run ``pip install git+https://github.com/bpeschier/django-preflight.git``.
+Run ``pip install git+https://github.com/bpeschier/django-preflight-checks.git``.
 
 Add ``preflight`` to your ``INSTALLED_APPS`` setting::
 
