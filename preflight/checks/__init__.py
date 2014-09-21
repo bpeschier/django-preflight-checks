@@ -6,5 +6,6 @@ from .external import *
 from .localization import *
 from .reporting import *
 from .preflight import *
+from .static import *
 from .storages import *
 from .templates import *
